@@ -1,0 +1,6 @@
+battery
+PCB
+metal
+metal_pcb
+plastic
+plastic_pcb
