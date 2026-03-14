@@ -1,0 +1,242 @@
+2026-03-14 21:44:41,086 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:44:41,087 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:44:41,092 [WARNING] ServoKit init failed: No I2C device at address: 0x40
+2026-03-14 21:44:41,092 [WARNING] Serial/LCD init failed: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+2026-03-14 21:44:41,094 [INFO] Model loaded. Labels: ['Battery', 'PCB', 'metal', 'plastic', 'default']
+2026-03-14 21:44:41,096 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.168.247.202:5000
+2026-03-14 21:44:41,096 [INFO] [33mPress CTRL+C to quit[0m
+2026-03-14 21:44:42,046 [INFO] [Thread] Camera thread started.
+2026-03-14 21:46:42,683 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:46:42,684 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:46:42,691 [WARNING] ServoKit init failed: No I2C device at address: 0x40
+2026-03-14 21:46:42,691 [WARNING] Serial/LCD init failed: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+2026-03-14 21:46:42,695 [INFO] Model loaded. Labels: ['Battery', 'PCB', 'metal', 'plastic', 'default']
+2026-03-14 21:46:42,696 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.168.247.202:5000
+2026-03-14 21:46:42,696 [INFO] [33mPress CTRL+C to quit[0m
+2026-03-14 21:46:43,656 [INFO] [Thread] Camera thread started.
+2026-03-14 21:48:48,303 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:48:48,304 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:48:48,311 [WARNING] ServoKit init failed: No I2C device at address: 0x40
+2026-03-14 21:48:48,311 [WARNING] Serial/LCD init failed: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+2026-03-14 21:48:48,314 [INFO] Model loaded. Labels: ['Battery', 'PCB', 'metal', 'plastic', 'default']
+2026-03-14 21:48:48,315 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.168.247.202:5000
+2026-03-14 21:48:48,316 [INFO] [33mPress CTRL+C to quit[0m
+2026-03-14 21:48:49,261 [INFO] [Thread] Camera thread started.
+2026-03-14 21:49:43,465 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:43] "GET / HTTP/1.1" 200 -
+2026-03-14 21:49:43,523 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:43] "GET /video_feed HTTP/1.1" 200 -
+2026-03-14 21:49:44,339 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:44] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-03-14 21:49:44,340 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:44] "GET /socket.io/?EIO=4&transport=polling&t=Ppj9O6w HTTP/1.1" 200 -
+2026-03-14 21:49:44,565 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:44] "POST /socket.io/?EIO=4&transport=polling&t=Ppj9OAF&sid=TwFYwd6sQADmsSFHAAAA HTTP/1.1" 200 -
+2026-03-14 21:49:44,568 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:44] "GET /socket.io/?EIO=4&transport=polling&t=Ppj9OAK&sid=TwFYwd6sQADmsSFHAAAA HTTP/1.1" 200 -
+2026-03-14 21:49:44,761 [INFO] 10.168.247.61 - - [14/Mar/2026 21:49:44] "GET /socket.io/?EIO=4&transport=polling&t=Ppj9ODy&sid=TwFYwd6sQADmsSFHAAAA HTTP/1.1" 200 -
+2026-03-14 21:49:59,179 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:49:59,179 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:49:59,353 [INFO] Result: plastic (90%)
+2026-03-14 21:49:59,353 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:50:00,853 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:50:00,853 [INFO] Servos auto-reset to default after sort.
+2026-03-14 21:50:07,406 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:50:07,406 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:50:07,552 [INFO] Result: plastic (99%)
+2026-03-14 21:50:07,552 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:50:09,053 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:50:09,053 [INFO] Servos auto-reset to default after sort.
+2026-03-14 21:50:09,575 [INFO] WebSocket 'reset' received.
+2026-03-14 21:50:09,575 [INFO] Manual reset triggered.
+2026-03-14 21:50:13,667 [INFO] 10.168.247.61 - - [14/Mar/2026 21:50:13] "GET /api/servo_config HTTP/1.1" 200 -
+2026-03-14 21:50:35,993 [INFO] 10.168.247.61 - - [14/Mar/2026 21:50:35] "[31m[1mPOST /api/servo_config HTTP/1.1[0m" 400 -
+2026-03-14 21:50:48,905 [INFO] 10.168.247.61 - - [14/Mar/2026 21:50:48] "POST /api/servo_config HTTP/1.1" 200 -
+2026-03-14 21:50:55,439 [INFO] 10.168.247.61 - - [14/Mar/2026 21:50:55] "GET /api/servo_config HTTP/1.1" 200 -
+2026-03-14 21:51:01,387 [INFO] 10.168.247.61 - - [14/Mar/2026 21:51:01] "POST /api/servo_config HTTP/1.1" 200 -
+2026-03-14 21:52:03,300 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:03,301 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:03,486 [INFO] Result: metal (47%)
+2026-03-14 21:52:03,486 [WARNING] Low confidence: metal at 47%
+2026-03-14 21:52:05,545 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:05,545 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:05,691 [INFO] Result: metal (82%)
+2026-03-14 21:52:05,691 [WARNING] Low confidence: metal at 82%
+2026-03-14 21:52:08,491 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:08,491 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:08,639 [INFO] Result: metal (90%)
+2026-03-14 21:52:08,639 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:52:10,139 [ERROR] set_servos called but ServoKit is not initialized.
+2026-03-14 21:52:10,139 [INFO] Servos auto-reset to default after sort.
+2026-03-14 21:52:21,416 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:21,416 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:21,563 [INFO] Result: Battery (46%)
+2026-03-14 21:52:21,563 [WARNING] Low confidence: Battery at 46%
+2026-03-14 21:52:23,016 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:23,017 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:23,193 [INFO] Result: metal (52%)
+2026-03-14 21:52:23,193 [WARNING] Low confidence: metal at 52%
+2026-03-14 21:52:24,219 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:24,219 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:24,393 [INFO] Result: plastic (51%)
+2026-03-14 21:52:24,393 [WARNING] Low confidence: plastic at 51%
+2026-03-14 21:52:25,383 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:25,384 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:25,528 [INFO] Result: plastic (57%)
+2026-03-14 21:52:25,528 [WARNING] Low confidence: plastic at 57%
+2026-03-14 21:52:26,507 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:26,507 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:26,662 [INFO] Result: Battery (43%)
+2026-03-14 21:52:26,662 [WARNING] Low confidence: Battery at 43%
+2026-03-14 21:52:28,105 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:28,106 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:28,251 [INFO] Result: Battery (64%)
+2026-03-14 21:52:28,251 [WARNING] Low confidence: Battery at 64%
+2026-03-14 21:52:28,958 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:28,959 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:29,104 [INFO] Result: Battery (68%)
+2026-03-14 21:52:29,104 [WARNING] Low confidence: Battery at 68%
+2026-03-14 21:52:30,435 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:30,435 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:30,612 [INFO] Result: Battery (55%)
+2026-03-14 21:52:30,612 [WARNING] Low confidence: Battery at 55%
+2026-03-14 21:52:32,512 [INFO] WebSocket 'start_sort' received.
+2026-03-14 21:52:32,513 [INFO] SORT command received. Capturing frames.
+2026-03-14 21:52:32,690 [INFO] Result: Battery (50%)
+2026-03-14 21:52:32,690 [WARNING] Low confidence: Battery at 50%
+2026-03-14 21:53:47,724 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:53:47,724 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:53:54,386 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:53:54,387 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:53:54,390 [WARNING] ServoKit init failed: No I2C device at address: 0x40
+2026-03-14 21:53:54,390 [WARNING] Serial/LCD init failed: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+2026-03-14 21:53:54,392 [INFO] Model loaded. Labels: ['Battery', 'PCB', 'metal', 'plastic', 'default']
+2026-03-14 21:54:00,857 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:00,858 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:07,365 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:07,365 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:13,890 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:13,890 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:20,367 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:20,367 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:26,875 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:26,875 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:33,341 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:33,342 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:39,901 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:39,902 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:46,377 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:46,378 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:52,877 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:52,878 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:54:59,375 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:54:59,375 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:05,915 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:05,916 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:12,422 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:12,423 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:19,119 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:19,120 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:25,605 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:25,606 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:32,113 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:32,113 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:38,624 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:38,625 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:45,130 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:45,130 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:51,629 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:51,630 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:55:58,143 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:55:58,144 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:04,611 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:04,612 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:11,149 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:11,149 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:17,656 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:17,657 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:24,122 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:24,123 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:30,649 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:30,650 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:37,115 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:37,115 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:43,618 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:43,618 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:50,122 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:50,122 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:56:56,613 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:56:56,613 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:03,119 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:03,120 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:09,645 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:09,646 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:16,126 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:16,126 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:22,623 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:22,623 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:29,099 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:29,099 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:35,631 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:35,632 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:42,141 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:42,142 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:48,628 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:48,629 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:57:55,134 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:57:55,135 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:01,643 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:01,644 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:08,139 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:08,139 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:14,602 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:14,602 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:21,119 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:21,119 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:27,591 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:27,592 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:34,114 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:34,115 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:40,652 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:40,653 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:47,107 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:47,107 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:58:53,615 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:58:53,615 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:00,117 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:00,118 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:06,634 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:06,635 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:13,127 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:13,127 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:19,644 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:19,645 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:26,109 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:26,109 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:32,635 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:32,636 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:39,124 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:39,124 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:45,630 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:45,631 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:52,121 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:52,121 [INFO] [Thread] Inference Worker started.
+2026-03-14 21:59:58,651 [INFO] Starting E-Waste Sorter application.
+2026-03-14 21:59:58,651 [INFO] [Thread] Inference Worker started.
+2026-03-14 22:00:05,120 [INFO] Starting E-Waste Sorter application.
+2026-03-14 22:00:05,121 [INFO] [Thread] Inference Worker started.
+2026-03-14 22:00:11,631 [INFO] Starting E-Waste Sorter application.
+2026-03-14 22:00:11,632 [INFO] [Thread] Inference Worker started.
+2026-03-14 22:00:11,632 [WARNING] Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+2026-03-14 22:00:11,638 [WARNING] ServoKit init failed: No I2C device at address: 0x40
+2026-03-14 22:00:11,638 [WARNING] Serial/LCD init failed: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+2026-03-14 22:00:11,641 [INFO] Model loaded. Labels: ['Battery', 'PCB', 'metal', 'plastic', 'default']
+2026-03-14 22:00:11,643 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.168.247.202:5000
+2026-03-14 22:00:11,644 [INFO] [33mPress CTRL+C to quit[0m
+2026-03-14 22:00:12,596 [INFO] [Thread] Camera thread started.
