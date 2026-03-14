@@ -4,9 +4,11 @@ import time
 import serial
 import threading
 import queue
-from flask import Flask, Response, render_template_string, jsonify
+from flask import Flask, Response, render_template_string, jsonify, request
 from flask_socketio import SocketIO, emit
 import logging
+import json
+import os
 from tflite_runtime.interpreter import Interpreter
 from adafruit_servokit import ServoKit
 
@@ -32,13 +34,38 @@ INPUT_HEIGHT = 224
 CONFIDENCE_THRESHOLD = 0.85 # Adjusted slightly for averaged results
 
 NUM_SERVOS = 4
-SERVO_ANGLES = {
+DEFAULT_SERVO_ANGLES = {
     'Battery': [90, 90, 90, 180],
     'PCB':     [90, 90, 0, 90],
     'metal':   [0, 90, 90, 90],
     'plastic': [90, 180, 90, 90], 
     'default': [90, 90, 90, 90],
 }
+
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'servo_config.json')
+
+def load_servo_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            log.error(f"Error loading servo config: {e}")
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(DEFAULT_SERVO_ANGLES, f, indent=4)
+    except Exception as e:
+        log.error(f"Error writing default config: {e}")
+    return DEFAULT_SERVO_ANGLES.copy()
+
+def save_servo_config():
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(SERVO_ANGLES, f, indent=4)
+    except Exception as e:
+        log.error(f"Error saving servo config: {e}")
+
+SERVO_ANGLES = load_servo_config()
 
 SERIAL_PORT = '/dev/ttyUSB0' 
 BAUD_RATE = 9600
@@ -279,6 +306,17 @@ HTML_TEMPLATE = """
         .alert-box { display: none; background: #b71c1c; color: #fff;
                      padding: 10px 20px; border-radius: 8px; margin: 10px auto;
                      max-width: 500px; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+                 width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #1a1a1a; margin: 5% auto; padding: 20px;
+                         border: 1px solid #333; width: 90%; max-width: 600px; border-radius: 12px; color: #fff; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;}
+        .modal-header h2 { margin: 0; color: #00e676; }
+        .modal-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .modal-table th, .modal-table td { border: 1px solid #333; padding: 10px; text-align: center; }
+        .modal-table input { width: 60px; padding: 5px; background: #262626; color: #fff; border: 1px solid #555; border-radius: 4px; text-align: center; }
+        .close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
@@ -294,6 +332,33 @@ HTML_TEMPLATE = """
     <div class="container">
         <button class="btn" onclick="triggerSort()">SCAN OBJECT</button>
         <button class="btn btn-red" onclick="triggerReset()">RESET</button>
+        <button class="btn" style="background: #555;" onclick="openConfigModal()">⚙️ SERVO CONFIG</button>
+    </div>
+
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Servo Configuration</h2>
+                <span class="close-btn" onclick="closeConfigModal()">&times;</span>
+            </div>
+            <table class="modal-table" id="configTable">
+                <thead>
+                    <tr>
+                        <th>Waste Type</th>
+                        <th>Servo 1</th>
+                        <th>Servo 2</th>
+                        <th>Servo 3</th>
+                        <th>Servo 4</th>
+                    </tr>
+                </thead>
+                <tbody id="configTableBody">
+                </tbody>
+            </table>
+            <div>
+                <button class="btn" onclick="saveConfig()">SAVE</button>
+                <button class="btn btn-red" onclick="closeConfigModal()">CANCEL</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -334,6 +399,59 @@ HTML_TEMPLATE = """
             document.getElementById('status-text').innerText = 'System Ready';
             document.getElementById('status-text').style.color = '#00e676';
         }
+
+        function openConfigModal() {
+            fetch('/api/servo_config')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('configTableBody');
+                    tbody.innerHTML = '';
+                    for (const [key, angles] of Object.entries(data)) {
+                        let html = `<tr><td>${key}</td>`;
+                        for (let i = 0; i < 4; i++) {
+                            html += `<td><input type="number" min="0" max="180" step="1" value="${angles[i]}"></td>`;
+                        }
+                        html += `</tr>`;
+                        tbody.innerHTML += html;
+                    }
+                    document.getElementById('configModal').style.display = 'block';
+                });
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+
+        function saveConfig() {
+            const rows = document.getElementById('configTableBody').getElementsByTagName('tr');
+            const newConfig = {};
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                const key = cells[0].innerText;
+                const angles = [];
+                for (let i = 1; i <= 4; i++) {
+                    const input = cells[i].getElementsByTagName('input')[0];
+                    angles.push(parseInt(input.value));
+                }
+                newConfig[key] = angles;
+            }
+
+            fetch('/api/servo_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newConfig)
+            })
+            .then(r => r.json().then(data => ({status: r.status, body: data})))
+            .then(res => {
+                if (res.status === 200) {
+                    alert('Servo configuration saved successfully!');
+                    closeConfigModal();
+                } else {
+                    alert('Error: ' + res.body.error);
+                }
+            })
+            .catch(err => alert('Request failed: ' + err));
+        }
     </script>
 </body>
 </html>
@@ -359,6 +477,27 @@ def generate_frames():
 
 @app.route('/video_feed')
 def video_feed(): return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/api/servo_config', methods=['GET', 'POST'])
+def api_servo_config():
+    global SERVO_ANGLES
+    if request.method == 'GET':
+        return jsonify(SERVO_ANGLES)
+    elif request.method == 'POST':
+        data = request.json
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "Invalid JSON format"}), 400
+        
+        for k, v in data.items():
+            if not isinstance(v, list) or len(v) != 4:
+                return jsonify({"error": f"Value for '{k}' must be a list of 4 integers"}), 400
+            for val in v:
+                if not isinstance(val, int) or val < 0 or val > 180:
+                    return jsonify({"error": f"Values must be integers between 0 and 180 (got {val})"}), 400
+        
+        SERVO_ANGLES.update(data)
+        save_servo_config()
+        return jsonify({"status": "success"})
 
 @socketio.on('start_sort')
 def handle_sort():
