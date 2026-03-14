@@ -1,5 +1,0 @@
-metal
-Battery
-PCB
-plastic
-default
