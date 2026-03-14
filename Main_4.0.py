@@ -5,10 +5,21 @@ import serial
 import threading
 import queue
 from flask import Flask, Response, render_template_string, jsonify
+from flask_socketio import SocketIO, emit
+import logging
 from tflite_runtime.interpreter import Interpreter
 from adafruit_servokit import ServoKit
 
+# --- LOGGING SETUP ---
+logging.basicConfig(
+    filename='sorter.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
+log = logging.getLogger(__name__)
+
 # --- CONFIGURATION ---
+TM_PIXEL_SCALE = 127.5   # Teachable Machine normalization: maps [0, 255] → [-1.0, 1.0]
 MODEL_PATH = 'model_2.tflite'
 LABEL_PATH = 'label_2.txt'
 
@@ -35,10 +46,25 @@ BAUD_RATE = 9600
 
 # --- GLOBAL STATE ---
 task_queue = queue.Queue()
-output_frame = None
-frame_lock = threading.Lock()
+
+class FrameBuffer:
+    """Thread-safe wrapper around the latest camera frame."""
+    def __init__(self):
+        self._frame = None
+        self._lock = threading.Lock()
+
+    def write(self, frame):
+        with self._lock:
+            self._frame = frame.copy()
+
+    def read(self):
+        with self._lock:
+            return self._frame.copy() if self._frame is not None else None
+
+frame_buffer = FrameBuffer()
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # --- UTILITY FUNCTIONS ---
 
@@ -56,27 +82,60 @@ def center_crop_and_resize(frame, size=(224, 224)):
     return cv2.resize(cropped, size)
 
 def set_servos(kit, angles):
-    if kit is None: return
+    """Move all servos to the given angles. Emits a WebSocket alert on failure."""
+    if kit is None:
+        log.error("set_servos called but ServoKit is not initialized.")
+        socketio.emit('hardware_error', {'msg': 'Servo not initialized!'})
+        return
     try:
         for i in range(NUM_SERVOS):
             kit.servo[i].angle = angles[i]
+            time.sleep(0.05)  # Allow each servo time to physically move
+        log.info(f"Servos moved to: {angles}")
     except Exception as e:
-        print(f"Error moving servos: {e}")
+        log.error(f"Servo failure: {e}")
+        socketio.emit('hardware_error', {'msg': f'Servo failure: {e}'})
+        raise
 
 def send_to_lcd(ser, line1, line2=""):
-    if ser is None: return
+    """Send two lines to the LCD over serial. Warns if text is truncated."""
+    if ser is None:
+        return
     try:
-        line1_trunc = line1[:16]
-        line2_trunc = line2[:16]
-        message = f"{line1_trunc}|{line2_trunc}\n"
+        if len(line1) > 16:
+            log.warning(f"LCD line1 truncated: '{line1}'")
+        if len(line2) > 16:
+            log.warning(f"LCD line2 truncated: '{line2}'")
+        message = f"{line1[:16]}|{line2[:16]}\n"
         ser.write(message.encode('utf-8'))
     except Exception as e:
-        print(f"LCD Error: {e}")
+        log.error(f"LCD serial error: {e}")
+
+def capture_n_distinct_frames(buffer, n=3, timeout=2.0):
+    """
+    Capture n visually distinct frames from the FrameBuffer.
+    Returns fewer than n frames if timeout is reached first.
+    """
+    frames = []
+    last_frame = None
+    deadline = time.time() + timeout
+
+    while len(frames) < n and time.time() < deadline:
+        frame = buffer.read()
+        if frame is not None:
+            if last_frame is None or not np.array_equal(frame, last_frame):
+                frames.append(frame)
+                last_frame = frame
+        time.sleep(0.03)
+
+    if len(frames) < n:
+        log.warning(f"Only captured {len(frames)}/{n} distinct frames before timeout.")
+    return frames
 
 # --- WORKER THREADS ---
 
 def inference_worker():
-    print("[Thread] Inference Worker started...")
+    log.info("[Thread] Inference Worker started.")
     kit = None
     ser = None
     interpreter = None
@@ -84,97 +143,116 @@ def inference_worker():
 
     try:
         kit = ServoKit(channels=16)
+        log.info("ServoKit initialized.")
     except Exception as e:
-        print(f"[Warning] ServoKit init failed: {e}")
+        log.warning(f"ServoKit init failed: {e}")
 
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-        time.sleep(2) 
+        time.sleep(2)
         send_to_lcd(ser, "System Ready", "Web Connected")
+        log.info("Serial/LCD initialized.")
     except Exception as e:
-        print(f"[Warning] Serial/LCD init failed: {e}")
-    
+        log.warning(f"Serial/LCD init failed: {e}")
+
     try:
         labels = load_labels(LABEL_PATH)
         interpreter = Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
+        log.info(f"Model loaded. Labels: {labels}")
     except Exception as e:
-        print(f"[CRITICAL] Model Loading Error: {e}")
+        log.critical(f"Model loading failed: {e}")
 
     if kit:
         set_servos(kit, SERVO_ANGLES['default'])
 
     while True:
-        command, frame, response_queue = task_queue.get()
-        
+        command, _, response_queue = task_queue.get()
+
         if command == 'SORT' and interpreter:
+            socketio.emit('sort_progress', {'msg': '📷 Capturing frames...'})
+            log.info("SORT command received. Capturing frames.")
+
+            # Capture 3 genuinely distinct frames
+            frames = capture_n_distinct_frames(frame_buffer, n=3, timeout=2.0)
+
             all_scores = []
-            
-            # --- MULTI-FRAME AVERAGING ---
-            # We take 3 quick snapshots to ensure lighting/blur doesn't ruin the result
-            for _ in range(3):
-                with frame_lock:
-                    current_f = output_frame.copy() if output_frame is not None else None
-                
-                if current_f is not None:
-                    # 1. Pre-process (RGB + Square Crop)
-                    rgb = cv2.cvtColor(current_f, cv2.COLOR_BGR2RGB)
-                    processed = center_crop_and_resize(rgb, (INPUT_WIDTH, INPUT_HEIGHT))
-                    
-                    # 2. Add Batch Dimension
-                    input_data = np.expand_dims(processed, axis=0)
+            for i, frame in enumerate(frames):
+                socketio.emit('sort_progress', {'msg': f'🧠 Analyzing frame {i+1}/{len(frames)}...'})
 
-                    # 3. TM NORMALIZATION: Scale [0,255] to [-1, 1]
-                    if input_details[0]['dtype'] == np.float32:
-                        input_data = (input_data.astype(np.float32) / 127.5) - 1.0
+                # Pre-process: BGR → RGB, center crop, resize
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                processed = center_crop_and_resize(rgb, (INPUT_WIDTH, INPUT_HEIGHT))
+                input_data = np.expand_dims(processed, axis=0)
 
-                    # 4. Inference
-                    interpreter.set_tensor(input_details[0]['index'], input_data)
-                    interpreter.invoke()
-                    all_scores.append(interpreter.get_tensor(output_details[0]['index'])[0])
-                
-                time.sleep(0.05) # Tiny gap between snapshots
+                # Normalize using Teachable Machine convention
+                if input_details[0]['dtype'] == np.float32:
+                    input_data = (input_data.astype(np.float32) / TM_PIXEL_SCALE) - 1.0
+
+                # Run inference
+                interpreter.set_tensor(input_details[0]['index'], input_data)
+                interpreter.invoke()
+                all_scores.append(
+                    interpreter.get_tensor(output_details[0]['index'])[0]
+                )
 
             if all_scores:
-                # Average the results across frames
                 avg_scores = np.mean(all_scores, axis=0)
-                class_id = np.argmax(avg_scores)
-                confidence = avg_scores[class_id]
+                class_id = int(np.argmax(avg_scores))
+                confidence = float(avg_scores[class_id])
                 class_name = labels[class_id]
+                log.info(f"Result: {class_name} ({confidence:.0%})")
 
                 if confidence > CONFIDENCE_THRESHOLD:
                     result_text = f"{class_name} ({confidence:.0%})"
                     send_to_lcd(ser, f"Found: {class_name}", f"Conf:{confidence:.0%}")
+                    socketio.emit('sort_result', {
+                        'result': result_text,
+                        'class': class_name,
+                        'confidence': confidence
+                    })
+
                     if class_name in SERVO_ANGLES:
                         set_servos(kit, SERVO_ANGLES[class_name])
+                        time.sleep(1.5)           # Wait for object to physically drop/slide
+                        set_servos(kit, SERVO_ANGLES['default'])   # Auto-reset
+                        send_to_lcd(ser, "Ready", "Next object?")
+                        log.info("Servos auto-reset to default after sort.")
                 else:
-                    result_text = "Not Found"
+                    result_text = "Low Confidence — Try Again"
                     send_to_lcd(ser, "Low Confidence", "Try Again")
+                    socketio.emit('sort_result', {'result': result_text, 'class': None, 'confidence': confidence})
+                    log.warning(f"Low confidence: {class_name} at {confidence:.0%}")
             else:
-                result_text = "Cam Error"
+                result_text = "Camera Error"
+                socketio.emit('sort_result', {'result': result_text, 'class': None, 'confidence': 0})
+                log.error("No frames captured for inference.")
 
             if response_queue:
                 response_queue.put(result_text)
 
         elif command == 'RESET':
-            if kit: set_servos(kit, SERVO_ANGLES['default'])
+            if kit:
+                set_servos(kit, SERVO_ANGLES['default'])
             send_to_lcd(ser, "Status: Ready", "Waiting...")
-            if response_queue: response_queue.put("Reset Complete")
+            socketio.emit('sort_result', {'result': 'System Reset ✅', 'class': None, 'confidence': 0})
+            log.info("Manual reset triggered.")
+            if response_queue:
+                response_queue.put("Reset Complete")
 
         task_queue.task_done()
 
 def camera_thread():
-    global output_frame
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
+    log.info("[Thread] Camera thread started.")
     while True:
         ret, frame = cap.read()
         if ret:
-            with frame_lock:
-                output_frame = frame.copy()
+            frame_buffer.write(frame)
         time.sleep(0.01)
 
 # --- FLASK APPLICATION ---
@@ -185,20 +263,30 @@ HTML_TEMPLATE = """
 <head>
     <title>E-Waste Sorter Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #1a1a1a; color: #fff; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center;
+               background: #1a1a1a; color: #fff; margin: 0; padding: 20px; }
         .container { margin-top: 20px; }
         img { border: 4px solid #333; border-radius: 12px; max-width: 100%; height: auto; }
-        .status-box { background: #262626; padding: 20px; margin: 20px auto; max-width: 500px; border-radius: 10px; border-left: 5px solid #00e676; }
+        .status-box { background: #262626; padding: 20px; margin: 20px auto;
+                      max-width: 500px; border-radius: 10px; border-left: 5px solid #00e676; }
         h2 { margin: 5px 0; color: #00e676; }
-        .btn { background: #008CBA; color: #fff; padding: 15px 40px; font-size: 18px; margin: 10px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; }
+        .btn { background: #008CBA; color: #fff; padding: 15px 40px; font-size: 18px;
+               margin: 10px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; }
         .btn-red { background: #d32f2f; }
         .loading { color: #ffeb3b; }
+        .alert-box { display: none; background: #b71c1c; color: #fff;
+                     padding: 10px 20px; border-radius: 8px; margin: 10px auto;
+                     max-width: 500px; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>♻️ E-Waste Smart Sorter</h1>
     <div><img src="{{ url_for('video_feed') }}"></div>
+
+    <div id="alert-box" class="alert-box"></div>
+
     <div class="status-box">
         <small style="color: #888;">AI CLASSIFICATION</small>
         <h2 id="status-text">System Ready</h2>
@@ -207,23 +295,44 @@ HTML_TEMPLATE = """
         <button class="btn" onclick="triggerSort()">SCAN OBJECT</button>
         <button class="btn btn-red" onclick="triggerReset()">RESET</button>
     </div>
+
     <script>
+        const socket = io();   // One persistent connection — stays open
+
+        // Live progress during inference (e.g. "Capturing frame 1/3...")
+        socket.on('sort_progress', (data) => {
+            const st = document.getElementById('status-text');
+            st.innerText = data.msg;
+            st.className = 'loading';
+            st.style.color = '#ffeb3b';
+        });
+
+        // Final classification result
+        socket.on('sort_result', (data) => {
+            const st = document.getElementById('status-text');
+            st.innerText = data.result;
+            st.className = '';
+            st.style.color = (data.class !== null) ? '#00e676' : '#ff5252';
+        });
+
+        // Hardware error pushed by the server (e.g. servo failure)
+        socket.on('hardware_error', (data) => {
+            const box = document.getElementById('alert-box');
+            box.innerText = '⚠️ Hardware Alert: ' + data.msg;
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 6000);
+        });
+
         function triggerSort() {
-            const st = document.getElementById("status-text");
-            st.innerText = "Analyzing... 🔍";
-            st.className = "loading";
-            fetch('/api/sort', { method: 'POST' })
-                .then(r => r.json())
-                .then(data => {
-                    st.innerText = data.result;
-                    st.className = "";
-                    st.style.color = data.result.includes("Found") ? "#00e676" : "#ff5252";
-                });
+            document.getElementById('status-text').innerText = 'Starting... 🔍';
+            document.getElementById('status-text').style.color = '#ffeb3b';
+            socket.emit('start_sort');   // Fire and forget — results arrive via events
         }
+
         function triggerReset() {
-            fetch('/api/reset', { method: 'POST' });
-            document.getElementById("status-text").innerText = "System Ready";
-            document.getElementById("status-text").style.color = "#00e676";
+            socket.emit('reset');
+            document.getElementById('status-text').innerText = 'System Ready';
+            document.getElementById('status-text').style.color = '#00e676';
         }
     </script>
 </body>
@@ -235,30 +344,36 @@ def index(): return render_template_string(HTML_TEMPLATE)
 
 def generate_frames():
     while True:
-        with frame_lock:
-            if output_frame is None: continue
-            (flag, encodedImage) = cv2.imencode(".jpg", output_frame)
-            if not flag: continue
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+        frame = frame_buffer.read()
+        if frame is None:
+            continue
+        flag, encoded = cv2.imencode(".jpg", frame)
+        if not flag:
+            continue
+        yield (
+            b'--frame\r\n'
+            b'Content-Type: image/jpeg\r\n\r\n'
+            + bytearray(encoded)
+            + b'\r\n'
+        )
 
 @app.route('/video_feed')
 def video_feed(): return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/api/sort', methods=['POST'])
-def api_sort():
-    res_q = queue.Queue()
-    task_queue.put(('SORT', None, res_q))
-    try:
-        return jsonify({"result": res_q.get(timeout=6)})
-    except:
-        return jsonify({"result": "Timeout Error"}), 500
+@socketio.on('start_sort')
+def handle_sort():
+    """WebSocket event: client requests a sort. Non-blocking."""
+    log.info("WebSocket 'start_sort' received.")
+    task_queue.put(('SORT', None, None))
 
-@app.route('/api/reset', methods=['POST'])
-def api_reset():
+@socketio.on('reset')
+def handle_reset():
+    """WebSocket event: client requests a reset."""
+    log.info("WebSocket 'reset' received.")
     task_queue.put(('RESET', None, None))
-    return jsonify({"status": "Reset triggered"})
 
 if __name__ == '__main__':
+    log.info("Starting E-Waste Sorter application.")
     threading.Thread(target=camera_thread, daemon=True).start()
     threading.Thread(target=inference_worker, daemon=True).start()
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False)
